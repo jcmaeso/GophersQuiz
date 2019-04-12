@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type Problem struct {
@@ -30,14 +31,14 @@ func (p *Problem) MakeQuestion() bool {
 }
 
 //Play function to launch some quizzes
-func (q *Quiz) play() {
+func (q *Quiz) play() int {
 	var points int = 0
 	for _, p := range q.Problems {
 		if p.MakeQuestion() {
 			points++
 		}
 	}
-	fmt.Println("Your score is ", points)
+	return points
 }
 
 //LoadQuiz Function to read csv file and dump it into a structure
@@ -75,5 +76,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	quiz.play()
+
+	c := make(chan int, 1)
+	go func() { c <- quiz.play() }()
+	select {
+	case score := <-c:
+		fmt.Println("You have finalized")
+		fmt.Println("Score", score)
+		// use err and reply
+	case <-time.After(10 * 1e9):
+		fmt.Println()
+		fmt.Println("You need to be quicker")
+		// call timed out
+	}
 }
